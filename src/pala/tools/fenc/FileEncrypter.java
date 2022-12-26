@@ -53,22 +53,26 @@ public class FileEncrypter {
 				header = Hashing.sha256(HASH_STRING + options.getKey() + HASH_STRING);
 		for (File f : files)
 			try {
-				process(f, options.isDecryptionMode(), options.getBufferSize(), header, hash);
+				process(f, options.isDecryptionMode(), options.getBufferSize(), options.isSuppressSuccessMessages(),
+						header, hash);
 			} catch (Exception e) {
 				System.err.println("Exception processing: " + f);
 				e.printStackTrace();
 			}
 	}
 
-	public static void process(File f, boolean decryptionMode, int bufferSize, byte[] header, byte... key)
-			throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
-		if (f.isFile())
+	public static void process(File f, boolean decryptionMode, int bufferSize, boolean suppressSuccessMessages,
+			byte[] header, byte... key) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
+		if (f.isFile()) {
 			processFile(f, decryptionMode, bufferSize, header, key);
-		else if (f.isDirectory())
+			if (!suppressSuccessMessages)
+				System.out.println(decryptionMode ? ("[DSUC](" + f.getAbsolutePath() + " Decrypted file " + f)
+						: ("[ESUC](" + f.getAbsolutePath() + " Eecrypted file " + f));
+		} else if (f.isDirectory())
 			try {
 				for (File i : f.listFiles())
 					try {
-						process(i, decryptionMode, bufferSize, header, key);
+						process(i, decryptionMode, bufferSize, suppressSuccessMessages, header, key);
 					} catch (IllegalArgumentException e) {
 						System.err.println(e.getMessage());
 					} catch (Exception e) {
@@ -99,8 +103,7 @@ public class FileEncrypter {
 		}
 		Files.copy(temp.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		temp.delete();
-		System.out.println(decryptionMode ? ("[DSUC](" + f.getAbsolutePath() + " Decrypted file " + f)
-				: ("[ESUC](" + f.getAbsolutePath() + " Eecrypted file " + f));
+		temp.deleteOnExit();
 	}
 
 	/**

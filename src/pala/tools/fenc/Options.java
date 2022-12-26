@@ -4,13 +4,33 @@ import pala.libs.generic.parsers.cli.CLIParams;
 
 public class Options {
 	private final String key;
-	private final boolean decryptionMode;
+	private final boolean decryptionMode, suppressSuccessMessages;
 	private final int bufferSize;
 
 	public Options(CLIParams params) {
 		key = params.readString((String) null, "-k", "--key");
 		decryptionMode = params.checkFlag(false, "--dec", "--decrypt", "-d");
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
+		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
+	}
+
+	/**
+	 * <p>
+	 * Specifies that success messages should be suppressed. Error messages will
+	 * still be printed when this option is enabled.
+	 * </p>
+	 * <p>
+	 * When encrypting many small files in certain environments, printing to
+	 * standard out may consume most of the program's CPU time. This can be avoided
+	 * by enabling this flag.
+	 * </p>
+	 * 
+	 * @flag --quiet -q --suppress-success-messages -s
+	 * @return <code>true</code> if success messages are being suppressed,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean isSuppressSuccessMessages() {
+		return suppressSuccessMessages;
 	}
 
 	/**
