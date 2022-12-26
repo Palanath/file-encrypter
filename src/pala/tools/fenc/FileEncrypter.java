@@ -25,52 +25,50 @@ public class FileEncrypter {
 		// java -jar fenc.jar -k="Some key" --dec -f F:/some/folder/on/f/drive
 		// /some/file/on/current/drive.txt some/relative/folder/
 		CLIParams flags = new CLIParams(args);
-		String key = flags.readString((String) null, "-k", "--key");
-		boolean decrypt = flags.checkFlag(false, "--dec", "--decrypt", "-d"),
-				fast = flags.checkFlag(false, "--fast", "-f");
+		Options options = new Options(flags);
 
 		List<String> specifiedFilePaths = flags.getUnnamed();
 		List<File> files = JavaTools.addAll(specifiedFilePaths, File::new, new ArrayList<>(specifiedFilePaths.size()));
 		for (File f : files)
 			try {
-				process(f, key, decrypt, fast);
+				process(f, options);
 			} catch (Exception e) {
 				System.err.println("Exception processing: " + f);
 				e.printStackTrace();
 			}
 	}
 
-	public static void process(File f, String key, boolean decrypt, boolean fast) throws IOException {
+	public static void process(File f, Options options) throws IOException {
 		if (f.isFile())
-			processFile(f, key, decrypt, fast);
+			processFile(f, options);
 		else if (f.isDirectory())
 			try {
 				for (File i : f.listFiles())
-					process(i, key, decrypt, fast);
+					process(i, options);
 			} catch (Exception e) {
 				System.err.println("Failed to iterate over files in " + f);
 				e.printStackTrace();
 			}
 	}
 
-	public static void processFile(File f, String key, boolean decrypt, boolean fast) throws IOException {
+	public static void processFile(File f, Options options) throws IOException {
 		// Expects f.isFile() to return true.
-		if (!fast) {
+		if (!options.isFastMode()) {
 			// Copy to temp directory first and attempt the encryption/decryption, so that
 			// if something goes wrong in the middle, the original file won't be damaged.
 			File temp = File.createTempFile("enc", null);
 			temp.deleteOnExit();
 			Files.copy(f.toPath(), temp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-			if (decrypt)
-				decryptFileInPlace(f, key);
+			if (options.isDecryptionMode())
+				decryptFileInPlace(f, options.getKey());
 			else
-				encryptFileInPlace(f, key);
+				encryptFileInPlace(f, options.getKey());
 			Files.copy(temp.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			temp.delete();
-		} else if (decrypt)
-			decryptFileInPlace(f, key);
+		} else if (options.isDecryptionMode())
+			decryptFileInPlace(f, options.getKey());
 		else
-			encryptFileInPlace(f, key);
+			encryptFileInPlace(f, options.getKey());
 	}
 
 	public static void encryptFileInPlace(File f, String key) {
