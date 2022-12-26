@@ -1,5 +1,6 @@
 package pala.tools.fenc;
 
+import java.awt.RenderingHints.Key;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,7 +29,7 @@ import pala.libs.generic.util.Hashing;
 
 public class FileEncrypter {
 
-	private static final byte[] HEADER = Hashing.sha512("Encrypted by FEnc.");
+	private static final String HASH_STRING = "Encrypted by FEnc.";
 
 	/**
 	 * <p>
@@ -48,23 +49,25 @@ public class FileEncrypter {
 
 		List<String> specifiedFilePaths = flags.getUnnamed();
 		List<File> files = JavaTools.addAll(specifiedFilePaths, File::new, new ArrayList<>(specifiedFilePaths.size()));
+		byte[] hash = Hashing.sha256(options.getKey()),
+				header = Hashing.sha256(HASH_STRING + options.getKey() + HASH_STRING);
 		for (File f : files)
 			try {
-				process(f, options);
+				process(f, options.isDecryptionMode(), options.getBufferSize(), header, hash);
 			} catch (Exception e) {
 				System.err.println("Exception processing: " + f);
 				e.printStackTrace();
 			}
 	}
 
-	public static void process(File f, Options options)
+	public static void process(File f, boolean decryptionMode, int bufferSize, byte[] header, byte... key)
 			throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
 		if (f.isFile())
-			processFile(f, options);
+			processFile(f, decryptionMode, bufferSize, header, key);
 		else if (f.isDirectory())
 			try {
 				for (File i : f.listFiles())
-					process(i, options);
+					process(i, decryptionMode, bufferSize, header, key);
 			} catch (IllegalArgumentException e) {
 				System.err.println(e.getMessage());
 			} catch (Exception e) {
@@ -73,19 +76,18 @@ public class FileEncrypter {
 			}
 	}
 
-	public static void processFile(File f, Options options)
+	private static void processFile(File f, boolean decryptionMode, int bufferSize, byte[] header, byte... key)
 			throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
 		// Expects f.isFile() to return true.
-		byte[] hash = Hashing.sha256(options.getKey());
 
 		// Create a temp file as the destination for the encryption/decryption.
 		File temp = File.createTempFile("enc", null);
 
 		try {
-			if (options.isDecryptionMode())
-				decryptFile(f, temp, options.getBufferSize(), hash);
+			if (decryptionMode)
+				decryptFile(f, temp, bufferSize, header, key);
 			else
-				encryptFile(f, temp, options.getBufferSize(), hash);
+				encryptFile(f, temp, bufferSize, header, key);
 		} catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
 		}
@@ -121,10 +123,11 @@ public class FileEncrypter {
 	 *                                            while reading/writing to the
 	 *                                            filesystem.
 	 */
-	public static void encryptFile(File f, File dest, int bufferSize, byte... key) throws NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException {
+	private static void encryptFile(File f, File dest, int bufferSize, byte[] header, byte... key)
+			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+			InvalidAlgorithmParameterException, IOException {
 		try (FileInputStream fis = new FileInputStream(f)) {
-			byte[] headerbf = new byte[64];
+			byte[] headerbf = new byte[header.length];
 			int amt = 0;
 			CHECK_ENCRYPTED: {
 				while (amt < headerbf.length)
@@ -133,7 +136,7 @@ public class FileEncrypter {
 
 				// We get here when enough bytes were read to comprise the "already encrypted"
 				// header. Do a comparison.
-				if (Arrays.equals(headerbf, HEADER)) {
+				if (Arrays.equals(headerbf, header)) {
 					// File already encrypted. Throw err:
 					throw new IllegalArgumentException("[AENC](" + f.getAbsolutePath() + ") Detected that file " + f
 							+ " is already encrypted. Skipping...");
@@ -150,7 +153,7 @@ public class FileEncrypter {
 			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
 
 			try (FileOutputStream fileOutputStream = new FileOutputStream(dest)) {
-				fileOutputStream.write(HEADER);
+				fileOutputStream.write(header);
 				fileOutputStream.write(iv);
 				try (CipherOutputStream cos = new CipherOutputStream(fileOutputStream, cipher)) {
 					// Encrypt already scanned bytes.
@@ -164,11 +167,11 @@ public class FileEncrypter {
 
 	}
 
-	public static long decryptFile(File f, File dest, int bufferSize, byte... key) throws IOException,
+	private static long decryptFile(File f, File dest, int bufferSize, byte[] hdr, byte... key) throws IOException,
 			NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		long total = 0;
 		try (FileInputStream fis = new FileInputStream(f)) {
-			byte[] header = new byte[80];
+			byte[] header = new byte[16 + hdr.length];
 			int amt = 0;
 			while (amt < header.length)
 				// If amount is decreased, then fis.read returned a negative number (i.e. -1),
@@ -182,9 +185,9 @@ public class FileEncrypter {
 					else
 						break;
 
-			byte[] iv = Arrays.copyOfRange(header, 64, 80);
-			for (int i = 0; i < HEADER.length; i++)
-				if (header[i] != HEADER[i])
+			byte[] iv = Arrays.copyOfRange(header, hdr.length, 16 + hdr.length);
+			for (int i = 0; i < hdr.length; i++)
+				if (header[i] != hdr[i])
 					throw new IllegalArgumentException("[NENC](" + f.getAbsolutePath() + ") Detected a file, " + f
 							+ ", that was not encrypted. The file's header does not match the form of the header written to files encrypted with this program. Skipping decryption attempt of this file... ");
 
