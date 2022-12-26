@@ -67,9 +67,15 @@ public class FileEncrypter {
 		else if (f.isDirectory())
 			try {
 				for (File i : f.listFiles())
-					process(i, decryptionMode, bufferSize, header, key);
-			} catch (IllegalArgumentException e) {
-				System.err.println(e.getMessage());
+					try {
+						process(i, decryptionMode, bufferSize, header, key);
+					} catch (IllegalArgumentException e) {
+						System.err.println(e.getMessage());
+					} catch (Exception e) {
+						System.err
+								.println("[FAIL](" + f.getAbsolutePath() + ") Failed to process the file: " + f + '.');
+						e.printStackTrace();
+					}
 			} catch (Exception e) {
 				System.err.println("Failed to iterate over files in " + f);
 				e.printStackTrace();
