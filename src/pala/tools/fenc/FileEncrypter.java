@@ -157,7 +157,7 @@ public class FileEncrypter {
 				fileOutputStream.write(iv);
 				try (CipherOutputStream cos = new CipherOutputStream(fileOutputStream, cipher)) {
 					// Encrypt already scanned bytes.
-					cos.write(headerbf);
+					cos.write(headerbf, 0, amt);
 					byte buff[] = new byte[bufferSize];
 					while ((amt = fis.read(buff)) != -1)
 						cos.write(buff, 0, amt);
