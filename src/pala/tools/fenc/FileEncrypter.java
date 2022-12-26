@@ -77,9 +77,9 @@ public class FileEncrypter {
 
 		try {
 			if (options.isDecryptionMode())
-				decryptFile(f, temp, hash);
+				decryptFile(f, temp, options.getBufferSize(), hash);
 			else
-				encryptFile(f, temp, hash);
+				encryptFile(f, temp, options.getBufferSize(), hash);
 		} catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
 		}
@@ -115,7 +115,7 @@ public class FileEncrypter {
 	 *                                            while reading/writing to the
 	 *                                            filesystem.
 	 */
-	public static void encryptFile(File f, File dest, byte... key) throws NoSuchAlgorithmException,
+	public static void encryptFile(File f, File dest, int bufferSize, byte... key) throws NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException {
 
 		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
@@ -129,7 +129,7 @@ public class FileEncrypter {
 			try (CipherOutputStream cos = new CipherOutputStream(fileOutputStream, cipher)) {
 				try (FileInputStream fis = new FileInputStream(f)) {
 					int amt;
-					byte buff[] = new byte[65536];
+					byte buff[] = new byte[bufferSize];
 					while ((amt = fis.read(buff)) != -1)
 						cos.write(buff, 0, amt);
 				}
@@ -138,8 +138,8 @@ public class FileEncrypter {
 
 	}
 
-	public static void decryptFile(File f, File dest, byte... key) throws IOException, NoSuchAlgorithmException,
-			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+	public static void decryptFile(File f, File dest, int bufferSize, byte... key) throws IOException,
+			NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		try (FileInputStream fis = new FileInputStream(f)) {
 			byte[] iv = new byte[16];
 			int amt = 0;
@@ -158,7 +158,7 @@ public class FileEncrypter {
 			Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 			cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
 			try (CipherInputStream cis = new CipherInputStream(fis, cipher)) {
-				byte[] buff = new byte[65536];
+				byte[] buff = new byte[bufferSize];
 				try (FileOutputStream fos = new FileOutputStream(dest)) {
 					while ((amt = cis.read(buff)) != -1)
 						fos.write(buff, 0, amt);
