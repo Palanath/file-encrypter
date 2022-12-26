@@ -99,6 +99,8 @@ public class FileEncrypter {
 		}
 		Files.copy(temp.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		temp.delete();
+		System.out.println(decryptionMode ? ("[DSUC](" + f.getAbsolutePath() + " Decrypted file " + f)
+				: ("[ESUC](" + f.getAbsolutePath() + " Eecrypted file " + f));
 	}
 
 	/**
@@ -170,12 +172,10 @@ public class FileEncrypter {
 				}
 			}
 		}
-
 	}
 
-	private static long decryptFile(File f, File dest, int bufferSize, byte[] hdr, byte... key) throws IOException,
+	private static void decryptFile(File f, File dest, int bufferSize, byte[] hdr, byte... key) throws IOException,
 			NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
-		long total = 0;
 		try (FileInputStream fis = new FileInputStream(f)) {
 			byte[] header = new byte[16 + hdr.length];
 			int amt = 0;
@@ -207,7 +207,6 @@ public class FileEncrypter {
 				}
 			}
 		}
-		return total;
 	}
 
 }
