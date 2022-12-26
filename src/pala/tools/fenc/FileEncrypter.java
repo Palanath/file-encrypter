@@ -11,6 +11,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -22,9 +23,13 @@ import javax.crypto.spec.SecretKeySpec;
 
 import pala.libs.generic.JavaTools;
 import pala.libs.generic.parsers.cli.CLIParams;
+import pala.libs.generic.strings.StringTools;
 import pala.libs.generic.util.Hashing;
 
 public class FileEncrypter {
+
+	private static final byte[] HEADER = Hashing.sha512("Encrypted by FEnc.");
+
 	/**
 	 * <p>
 	 * Encrypts files and directories specified by arguments. Each file is processed
@@ -60,6 +65,8 @@ public class FileEncrypter {
 			try {
 				for (File i : f.listFiles())
 					process(i, options);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
 			} catch (Exception e) {
 				System.err.println("Failed to iterate over files in " + f);
 				e.printStackTrace();
@@ -73,7 +80,6 @@ public class FileEncrypter {
 
 		// Create a temp file as the destination for the encryption/decryption.
 		File temp = File.createTempFile("enc", null);
-		temp.deleteOnExit();
 
 		try {
 			if (options.isDecryptionMode())
@@ -117,18 +123,38 @@ public class FileEncrypter {
 	 */
 	public static void encryptFile(File f, File dest, int bufferSize, byte... key) throws NoSuchAlgorithmException,
 			NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException {
+		try (FileInputStream fis = new FileInputStream(f)) {
+			byte[] headerbf = new byte[64];
+			int amt = 0;
+			CHECK_ENCRYPTED: {
+				while (amt < headerbf.length)
+					if (amt > (amt += fis.read(headerbf, amt, headerbf.length - amt)))
+						break CHECK_ENCRYPTED;// File is too small to have "already encrypted" header.
 
-		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
-		SecureRandom ran = new SecureRandom();
-		byte[] iv = new byte[16];
-		ran.nextBytes(iv);
-		cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
+				// We get here when enough bytes were read to comprise the "already encrypted"
+				// header. Do a comparison.
+				if (Arrays.equals(headerbf, HEADER)) {
+					// File already encrypted. Throw err:
+					throw new IllegalArgumentException("[AENC](" + f.getAbsolutePath() + ") Detected that file " + f
+							+ " is already encrypted. Skipping...");
+					// Include "[AENC]" followed by the file before the message to make it easy for
+					// log scanners to grab the data. AENC is short for "already encrypted."
 
-		try (FileOutputStream fileOutputStream = new FileOutputStream(dest)) {
-			fileOutputStream.write(iv);
-			try (CipherOutputStream cos = new CipherOutputStream(fileOutputStream, cipher)) {
-				try (FileInputStream fis = new FileInputStream(f)) {
-					int amt;
+				} // If the header is not present, we need to encrypt the bytes we read.
+			}
+
+			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			SecureRandom ran = new SecureRandom();
+			byte[] iv = new byte[16];
+			ran.nextBytes(iv);
+			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
+
+			try (FileOutputStream fileOutputStream = new FileOutputStream(dest)) {
+				fileOutputStream.write(HEADER);
+				fileOutputStream.write(iv);
+				try (CipherOutputStream cos = new CipherOutputStream(fileOutputStream, cipher)) {
+					// Encrypt already scanned bytes.
+					cos.write(headerbf);
 					byte buff[] = new byte[bufferSize];
 					while ((amt = fis.read(buff)) != -1)
 						cos.write(buff, 0, amt);
@@ -138,24 +164,31 @@ public class FileEncrypter {
 
 	}
 
-	public static void decryptFile(File f, File dest, int bufferSize, byte... key) throws IOException,
+	public static long decryptFile(File f, File dest, int bufferSize, byte... key) throws IOException,
 			NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+		long total = 0;
 		try (FileInputStream fis = new FileInputStream(f)) {
-			byte[] iv = new byte[16];
+			byte[] header = new byte[80];
 			int amt = 0;
-			while (amt < iv.length)
+			while (amt < header.length)
 				// If amount is decreased, then fis.read returned a negative number (i.e. -1),
 				// meaning the end of the stream was reached (before amt hit 16), so less than
 				// 16 bytes were read. This means that the file (f) did not contain an
 				// initialization vector.
-				if (amt < (amt += fis.read(iv, amt, iv.length - amt)))
-					if (amt < iv.length)
-						throw new IllegalArgumentException(
-								"Specified source file does not have enough bytes to contain an initialization vector. This file is not ciphertext created by this program.");
+				if (amt > (amt += fis.read(header, amt, header.length - amt)))
+					if (amt < header.length)
+						throw new IllegalArgumentException("[NENC](" + f.getAbsolutePath()
+								+ ") Detected a file that was not encrypted. The file does not have enough bytes (80) to contain a header. Every file encrypted by this program has an 80 byte header (64 bytes containing a unique \"encrypted-by-fenc\" hash string, and 16 containing the initialization vector needed for decryption). This file is not even 80 bytes long and so cannot have been encrypted by this program.");
 					else
 						break;
 
-			Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+			byte[] iv = Arrays.copyOfRange(header, 64, 80);
+			for (int i = 0; i < HEADER.length; i++)
+				if (header[i] != HEADER[i])
+					throw new IllegalArgumentException("[NENC](" + f.getAbsolutePath() + ") Detected a file, " + f
+							+ ", that was not encrypted. The file's header does not match the form of the header written to files encrypted with this program. Skipping decryption attempt of this file... ");
+
+			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
 			try (CipherInputStream cis = new CipherInputStream(fis, cipher)) {
 				byte[] buff = new byte[bufferSize];
@@ -165,6 +198,7 @@ public class FileEncrypter {
 				}
 			}
 		}
+		return total;
 	}
 
 }
