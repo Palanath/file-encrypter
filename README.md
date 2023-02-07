@@ -16,10 +16,15 @@ java -jar fenc.jar -k=secret hobbit.txt
 > This is *example* output by the program on this file with `secret` as the key. The result of the encryption is random upon each execution, so encrypting two copies of the same file with the same key is almost *guaranteed* to result in different, random outputs. Despite this, each of these encrypted files will be validly decrypted back to the same, original file. (This is normal.)
 
 ## Invocation
-Invoking the program is simple. Call it as a Java program, specify a `--key`, and specify which files (or directories) you want encrypted: 
+Invoking the program is simple: 
+1. Call it as a Java program: `java -jar fenc.jar`
+2. Specify a `--key`: `-k="Some secure password!"
+3. Specify which files (or directories) you want encrypted: `file1.txt /file2.txt C:/some/directory/`
+All together, it becomes:
 ```batch
 java -jar fenc.jar --key="some key" file1.txt /file2.txt C:/some/directory/
 ```
+
 The program encrypts each of the files and overwrites them with their encrypted counterparts. For each directory specified, every file in the directory is encrypted as if specified directly as an argument.
 
 To decrypt, you may run the same but with the `-d` flag:
