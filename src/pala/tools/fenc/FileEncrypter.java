@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -52,7 +53,10 @@ public class FileEncrypter {
 			JavaTools.walktree(a -> {
 				if (a.isFile())
 					try {
-						System.out.println('[' + StringTools.toHexString(Hashing.sha256(Files.readAllBytes(a.toPath())))
+						System.out.println('['
+								+ StringTools.toHexString(
+										a.length() > options.getBufferSize() ? hashFile(a, options.getBufferSize())
+												: Hashing.sha256(Files.readAllBytes(a.toPath())))
 								+ "] - " + a.getAbsolutePath());
 					} catch (IOException e) {
 						System.err.println("[HFL](" + a.getAbsolutePath() + ") Failed to hash: " + a + '.');
@@ -69,6 +73,20 @@ public class FileEncrypter {
 					System.err.println("Exception processing: " + f);
 					e.printStackTrace();
 				}
+		}
+	}
+
+	public static byte[] hashFile(File f, int bufferSize) throws IOException {
+		try (FileInputStream fis = new FileInputStream(f)) {
+			MessageDigest sha = MessageDigest.getInstance("SHA-256");
+			byte[] buff = new byte[bufferSize];
+			int c;
+			while ((c = fis.read(buff)) != -1)
+				sha.update(buff, 0, c);
+			return sha.digest();
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(
+					"SHA-256 implementation not supported on this Java system; hashing could not be performed.");
 		}
 	}
 
