@@ -22,7 +22,8 @@ public class Options {
 	 * only hashes all the files it encounters; it does not encrypt or decrypt
 	 * anything. This option cannot be used with {@link #isDecryptionMode()
 	 * decryption mode}. When this option is specified, a {@link #getKey() key}
-	 * should not be specified. When this option is specified, other options are
+	 * should not be specified. This option considers the {@link #getBufferSize()
+	 * bufferSize} when reading in data from a file to hash. All other options are
 	 * ignored.
 	 * 
 	 * @return Whether hash mode is enabled.
