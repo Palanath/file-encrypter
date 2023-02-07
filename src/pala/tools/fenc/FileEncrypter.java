@@ -102,8 +102,6 @@ public class FileEncrypter {
 				for (File i : f.listFiles())
 					try {
 						process(i, decryptionMode, bufferSize, suppressSuccessMessages, header, key);
-					} catch (IllegalArgumentException e) {
-						System.err.println(e.getMessage());
 					} catch (Exception e) {
 						System.err
 								.println("[FAIL](" + f.getAbsolutePath() + ") Failed to process the file: " + f + '.');
@@ -118,6 +116,9 @@ public class FileEncrypter {
 	private static void processFile(File f, boolean decryptionMode, int bufferSize, byte[] header, byte... key)
 			throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
 		// Expects f.isFile() to return true.
+
+		if (f.length() == 0)
+			return;
 
 		// Create a temp file as the destination for the encryption/decryption.
 		File temp = File.createTempFile("enc", null);
