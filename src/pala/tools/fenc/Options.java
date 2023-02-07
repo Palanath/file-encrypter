@@ -4,7 +4,7 @@ import pala.libs.generic.parsers.cli.CLIParams;
 
 public class Options {
 	private final String key;
-	private final boolean decryptionMode, suppressSuccessMessages;
+	private final boolean decryptionMode, suppressSuccessMessages, hashMode;
 	private final int bufferSize;
 
 	public Options(CLIParams params) {
@@ -12,6 +12,23 @@ public class Options {
 		decryptionMode = params.checkFlag(false, "--dec", "--decrypt", "-d");
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
+		hashMode = params.checkFlag(false, "-h", "--hash");
+		if (hashMode && (key != null || decryptionMode))
+			throw new IllegalArgumentException("Hash mode cannot be used with a --key or with --decrypt enabled.");
+	}
+
+	/**
+	 * Determines whether the program is in hash mode. In hash mode, the program
+	 * only hashes all the files it encounters; it does not encrypt or decrypt
+	 * anything. This option cannot be used with {@link #isDecryptionMode()
+	 * decryption mode}. When this option is specified, a {@link #getKey() key}
+	 * should not be specified. When this option is specified, other options are
+	 * ignored.
+	 * 
+	 * @return Whether hash mode is enabled.
+	 */
+	public boolean isHashMode() {
+		return hashMode;
 	}
 
 	/**

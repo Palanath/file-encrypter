@@ -1,6 +1,5 @@
 package pala.tools.fenc;
 
-import java.awt.RenderingHints.Key;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -49,16 +48,28 @@ public class FileEncrypter {
 
 		List<String> specifiedFilePaths = flags.getUnnamed();
 		List<File> files = JavaTools.addAll(specifiedFilePaths, File::new, new ArrayList<>(specifiedFilePaths.size()));
-		byte[] hash = Hashing.sha256(options.getKey()),
-				header = Hashing.sha256(HASH_STRING + options.getKey() + HASH_STRING);
-		for (File f : files)
-			try {
-				process(f, options.isDecryptionMode(), options.getBufferSize(), options.isSuppressSuccessMessages(),
-						header, hash);
-			} catch (Exception e) {
-				System.err.println("Exception processing: " + f);
-				e.printStackTrace();
-			}
+		if (options.isHashMode())
+			JavaTools.walktree(a -> {
+				if (a.isFile())
+					try {
+						System.out.println('[' + StringTools.toHexString(Hashing.sha256(Files.readAllBytes(a.toPath())))
+								+ "] - " + a.getAbsolutePath());
+					} catch (IOException e) {
+						System.err.println("[HFL](" + a.getAbsolutePath() + ") Failed to hash: " + a + '.');
+					}
+			}, files);
+		else {
+			byte[] hash = Hashing.sha256(options.getKey()),
+					header = Hashing.sha256(HASH_STRING + options.getKey() + HASH_STRING);
+			for (File f : files)
+				try {
+					process(f, options.isDecryptionMode(), options.getBufferSize(), options.isSuppressSuccessMessages(),
+							header, hash);
+				} catch (Exception e) {
+					System.err.println("Exception processing: " + f);
+					e.printStackTrace();
+				}
+		}
 	}
 
 	public static void process(File f, boolean decryptionMode, int bufferSize, boolean suppressSuccessMessages,
