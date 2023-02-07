@@ -95,8 +95,8 @@ public class FileEncrypter {
 		if (f.isFile()) {
 			processFile(f, decryptionMode, bufferSize, header, key);
 			if (!suppressSuccessMessages)
-				System.out.println(decryptionMode ? ("[DSUC](" + f.getAbsolutePath() + " Decrypted file " + f)
-						: ("[ESUC](" + f.getAbsolutePath() + " Eecrypted file " + f));
+				System.out.println((decryptionMode ? "[DSUC](" + f.getAbsolutePath() + " Decrypted file " + f
+						: "[ESUC](" + f.getAbsolutePath() + " Eecrypted file " + f) + ')');
 		} else if (f.isDirectory())
 			try {
 				for (File i : f.listFiles())
