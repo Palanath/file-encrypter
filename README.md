@@ -15,6 +15,12 @@ java -jar fenc.jar -k=secret hobbit.txt
 > **Note**
 > This is *example* output by the program on this file with `secret` as the key. The result of the encryption is random upon each execution, so encrypting two copies of the same file with the same key is almost *guaranteed* to result in different, random outputs. Despite this, each of these encrypted files will be validly decrypted back to the same, original file. (This is normal.)
 
+To recover the original text, the file can be decrypted (using the `-d` flag):
+
+```batch
+java -jar fenc.jar -k=secret -d hobbit.txt
+```
+
 ## Invocation
 Invoking the program is simple: 
 1. Call it as a Java program: `java -jar fenc.jar`
