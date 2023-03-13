@@ -204,10 +204,8 @@ public class FileEncrypter {
 					// Encrypt already scanned bytes.
 					cos.write(headerbf, 0, amt);
 					byte buff[] = new byte[bufferSize];
-					while ((amt = fis.read(buff)) != -1) {
-						System.out.println("Bytes: " + new String(buff));
+					while ((amt = fis.read(buff)) != -1)
 						cos.write(buff, 0, amt);
-					}
 				}
 			}
 		}
