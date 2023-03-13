@@ -171,9 +171,13 @@ public class FileEncrypter {
 			byte[] headerbf = new byte[header.length];
 			int amt = 0;
 			CHECK_ENCRYPTED: {
-				while (amt < headerbf.length)
-					if (amt > (amt += fis.read(headerbf, amt, headerbf.length - amt)))
-						break CHECK_ENCRYPTED;// File is too small to have "already encrypted" header.
+				while (amt < headerbf.length) {
+					int readcnt = fis.read(headerbf, amt, headerbf.length - amt);
+					if (readcnt == -1)
+						break CHECK_ENCRYPTED;
+					else
+						amt += readcnt;
+				}
 
 				// We get here when enough bytes were read to comprise the "already encrypted"
 				// header. Do a comparison.
@@ -200,8 +204,10 @@ public class FileEncrypter {
 					// Encrypt already scanned bytes.
 					cos.write(headerbf, 0, amt);
 					byte buff[] = new byte[bufferSize];
-					while ((amt = fis.read(buff)) != -1)
+					while ((amt = fis.read(buff)) != -1) {
+						System.out.println("Bytes: " + new String(buff));
 						cos.write(buff, 0, amt);
+					}
 				}
 			}
 		}
@@ -212,17 +218,16 @@ public class FileEncrypter {
 		try (FileInputStream fis = new FileInputStream(f)) {
 			byte[] header = new byte[16 + hdr.length];
 			int amt = 0;
-			while (amt < header.length)
-				// If amount is decreased, then fis.read returned a negative number (i.e. -1),
-				// meaning the end of the stream was reached (before amt hit 16), so less than
-				// 16 bytes were read. This means that the file (f) did not contain an
-				// initialization vector.
-				if (amt > (amt += fis.read(header, amt, header.length - amt)))
+			while (amt < header.length) {
+				int readcnt = fis.read(header, amt, header.length - amt);
+				if (readcnt == -1)
 					if (amt < header.length)
 						throw new IllegalArgumentException("[NENC](" + f.getAbsolutePath()
 								+ ") Detected a file that was not encrypted. The file does not have enough bytes (80) to contain a header. Every file encrypted by this program has an 80 byte header (64 bytes containing a unique \"encrypted-by-fenc\" hash string, and 16 containing the initialization vector needed for decryption). This file is not even 80 bytes long and so cannot have been encrypted by this program.");
 					else
 						break;
+				amt += readcnt;
+			}
 
 			byte[] iv = Arrays.copyOfRange(header, hdr.length, 16 + hdr.length);
 			for (int i = 0; i < hdr.length; i++)
