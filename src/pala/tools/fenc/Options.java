@@ -3,18 +3,34 @@ package pala.tools.fenc;
 import pala.libs.generic.parsers.cli.CLIParams;
 
 public class Options {
+
+	public enum Mode {
+		ENCRYPT, DECRYPT, HASH, KEYGEN
+	}
+
 	private final String key;
-	private final boolean decryptionMode, suppressSuccessMessages, hashMode;
+	private final boolean suppressSuccessMessages;
 	private final int bufferSize;
+	private Mode mode;
+
+	private void setMode(Mode mode) {
+		if (mode == null)
+			throw new RuntimeException("Two separate modes specified: " + this.mode + ", and " + mode);
+		this.mode = mode;
+	}
 
 	public Options(CLIParams params) {
 		key = params.readString((String) null, "-k", "--key");
-		decryptionMode = params.checkFlag(false, "--dec", "--decrypt", "-d");
+		if (params.checkFlag(false, "--dec", "--decrypt", "-d"))
+			mode = Mode.DECRYPT;
+		if (params.checkFlag(false, "-h", "--hash"))
+			setMode(Mode.DECRYPT);
+		if (params.checkFlag(false, "-kg", "--keygen"))
+			setMode(Mode.KEYGEN);
+		if (mode == null)
+			mode = Mode.ENCRYPT;
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
-		hashMode = params.checkFlag(false, "-h", "--hash");
-		if (hashMode && (key != null || decryptionMode))
-			throw new IllegalArgumentException("Hash mode cannot be used with a --key or with --decrypt enabled.");
 	}
 
 	/**
@@ -29,7 +45,7 @@ public class Options {
 	 * @return Whether hash mode is enabled.
 	 */
 	public boolean isHashMode() {
-		return hashMode;
+		return mode == Mode.HASH;
 	}
 
 	/**
@@ -67,10 +83,36 @@ public class Options {
 	 * 
 	 * @flag --deg --decrypt -d
 	 * @defaultValue <code>false</code>
-	 * @return Whether encryption or decryption is being performed.
+	 * @return Whether decryption is being performed.
 	 */
 	public boolean isDecryptionMode() {
-		return decryptionMode;
+		return mode == Mode.DECRYPT;
+	}
+
+	/**
+	 * <code>true</code> if the files specified when the app is launched should be
+	 * encrypted. This mode is enabled by default if {@link #isDecryptionMode()},
+	 * {@link #isHashMode()}, and {@link #isKeygenMode()} are not used.
+	 * 
+	 * @return Whether encryption is being performed.
+	 */
+	public boolean isEncryptionMode() {
+		return mode == Mode.ENCRYPT;
+	}
+
+	/**
+	 * <code>true</code> if the app is to generate a key rather than encrypt,
+	 * decrypt, or hash.
+	 * 
+	 * @flag --keygen -k
+	 * @return <code>true</code> if {@link Mode#KEYGEN} is the selected mode.
+	 */
+	public boolean isKeygenMode() {
+		return mode == Mode.KEYGEN;
+	}
+
+	public Mode getMode() {
+		return mode;
 	}
 
 	/**
