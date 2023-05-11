@@ -3,6 +3,7 @@ package pala.tools.fenc;
 import java.security.SecureRandom;
 
 import pala.libs.generic.parsers.cli.CLIParams;
+import static pala.tools.fenc.KeyCharset.*;
 
 public class Options {
 
@@ -51,6 +52,7 @@ public class Options {
 	private final int bufferSize;
 	private Mode mode;
 	private final int keygenSize;
+	private final KeyCharset keyCharset;
 
 	private void setMode(Mode mode) {
 		if (mode == null)
@@ -68,9 +70,53 @@ public class Options {
 			setMode(Mode.KEYGEN);
 		if (mode == null)
 			mode = Mode.ENCRYPT;
+		{
+			String kc = params.readString((String) null, "--key-charset", "-kc");
+			if (kc == null)
+				keyCharset = null;
+			else
+				switch (kc) {
+				case "lowercase":
+				case "lower":
+					keyCharset = LOWERCASE_LETTERS;
+					break;
+				case "uppercase":
+				case "upper":
+					keyCharset = UPPERCASE_LETTERS;
+					break;
+				case "numbers":
+				case "digits":
+					keyCharset = DIGITS;
+					break;
+				case "alphanumeric":
+				case "alphanum":
+				case "letters-and-numbers":
+					keyCharset = LETTERS_AND_NUMBERS;
+					break;
+				case "symbols":
+					keyCharset = SYMBOLS;
+					break;
+				case "extra-symbols":
+					keyCharset = EXTRA_SYMBOLS;
+					break;
+				case "extended-symbols":
+					keyCharset = EXTENDED_SYMBOL_SET;
+					break;
+				case "alphanum-and-symbols":
+				case "all":
+					keyCharset = ALPHANUM_AND_SYMBOLS;
+				default:
+					throw new IllegalArgumentException(kc
+							+ " is not a valid key charset. Options are:\n\tlowercase, lower, uppercase, upper, number, digits, alphanumeric, alphanum, letters-and-numbers, symbol, extra-symbols, extended-symbols, alphanum-and-symbols, all");
+				}
+		}
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
 		keygenSize = params.readInt(10, "-ks", "--keygen-size", "--key-size");
+	}
+
+	public KeyCharset getKeyCharset() {
+		return keyCharset;
 	}
 
 	public int getKeygenSize() {
