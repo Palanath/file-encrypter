@@ -114,6 +114,7 @@ public class Options {
 					System.err.println(kc
 							+ " is not a valid key charset. Options are:\n\tlowercase, lower, uppercase, upper, number, digits, alphanumeric, alphanum, letters-and-numbers, symbol, extra-symbols, extended-symbols, alphanum-and-symbols, all");
 					System.exit(0);
+					keyCharset = null;
 				}
 				setMode(Mode.KEYGEN);
 			}
