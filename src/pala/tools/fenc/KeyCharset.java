@@ -1,5 +1,6 @@
 package pala.tools.fenc;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,6 +21,11 @@ public interface KeyCharset {
 	@FunctionalInterface
 	interface IntToCharFunction {
 		char get(int index);
+	}
+
+	@FunctionalInterface
+	interface CharToCharFunction {
+		char transform(char input);
 	}
 
 	/**
@@ -58,7 +64,71 @@ public interface KeyCharset {
 		};
 	}
 
-	static KeyCharset from(List<Character> chars) throws IndexOutOfBoundsException {
+	static KeyCharset from(List<Character> chars) {
 		return from(chars.size(), chars::get);
 	}
+
+	static KeyCharset combine(KeyCharset first, KeyCharset second) {
+		int fs = first.size(), ss = second.size();
+		return new KeyCharset() {
+
+			@Override
+			public int size() {
+				return fs + ss;
+			}
+
+			@Override
+			public char get(int val) throws IndexOutOfBoundsException {
+				return val >= fs ? second.get(val - fs) : first.get(val);
+			}
+		};
+	}
+
+	static KeyCharset combine(KeyCharset... charsets) {
+		int total = 0, indices[] = new int[charsets.length];
+		for (int i = 0; i < charsets.length; indices[i] = total += charsets[i++].size())
+			;
+		final int t = total;
+
+		System.out.println(Arrays.toString(indices));
+
+		return new KeyCharset() {
+
+			@Override
+			public int size() {
+				return t;
+			}
+
+			@Override
+			public char get(int val) throws IndexOutOfBoundsException {
+
+				for (int i = 0; i < indices.length; i++)
+					if (val < indices[i])
+						return charsets[i].get(val - (i == 0 ? 0 : indices[i - 1]));
+				throw new IndexOutOfBoundsException(
+						"Out of bounds for combined KeyCharset. Maximum size is: " + t + ". Provided size is: " + val);
+			}
+		};
+	}
+
+	static KeyCharset transform(KeyCharset other, CharToCharFunction transformer) {
+		return new KeyCharset() {
+			@Override
+			public int size() {
+				return other.size();
+			}
+
+			@Override
+			public char get(int val) throws IndexOutOfBoundsException {
+				return transformer.transform(other.get(val));
+			}
+		};
+	}
+
+	KeyCharset LOWERCASE_LETTERS = from('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+			'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'),
+			UPPERCASE_LETTERS = transform(LOWERCASE_LETTERS, Character::toUpperCase),
+			DIGITS = from('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'),
+			LETTERS = combine(LOWERCASE_LETTERS, UPPERCASE_LETTERS),
+			LETTERS_AND_NUMBERS = combine(LOWERCASE_LETTERS, UPPERCASE_LETTERS, DIGITS);
 }
