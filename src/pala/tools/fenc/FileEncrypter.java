@@ -47,33 +47,55 @@ public class FileEncrypter {
 		CLIParams flags = new CLIParams(args);
 		Options options = new Options(flags);
 
-		List<String> specifiedFilePaths = flags.getUnnamed();
-		List<File> files = JavaTools.addAll(specifiedFilePaths, File::new, new ArrayList<>(specifiedFilePaths.size()));
-		if (options.isHashMode())
-			JavaTools.walktree(a -> {
-				if (a.isFile())
-					try {
-						System.out.println('['
-								+ StringTools.toHexString(
-										a.length() > options.getBufferSize() ? hashFile(a, options.getBufferSize())
-												: Hashing.sha256(Files.readAllBytes(a.toPath())))
-								+ "] - " + a.getAbsolutePath());
-					} catch (IOException e) {
-						System.err.println("[HFL](" + a.getAbsolutePath() + ") Failed to hash: " + a + '.');
-					}
-			}, files);
+		if (options.isKeygenMode())
+			genkeys(options);
 		else {
-			byte[] hash = Hashing.sha256(options.getKey()),
-					header = Hashing.sha256(HASH_STRING + options.getKey() + HASH_STRING);
-			for (File f : files)
-				try {
-					process(f, options.isDecryptionMode(), options.getBufferSize(), options.isSuppressSuccessMessages(),
-							header, hash);
-				} catch (Exception e) {
-					System.err.println("Exception processing: " + f);
-					e.printStackTrace();
-				}
+			List<String> specifiedFilePaths = flags.getUnnamed();
+			List<File> files = JavaTools.addAll(specifiedFilePaths, File::new,
+					new ArrayList<>(specifiedFilePaths.size()));
+			if (options.isHashMode())
+				JavaTools.walktree(a -> {
+					if (a.isFile())
+						try {
+							System.out.println('['
+									+ StringTools.toHexString(
+											a.length() > options.getBufferSize() ? hashFile(a, options.getBufferSize())
+													: Hashing.sha256(Files.readAllBytes(a.toPath())))
+									+ "] - " + a.getAbsolutePath());
+						} catch (IOException e) {
+							System.err.println("[HFL](" + a.getAbsolutePath() + ") Failed to hash: " + a + '.');
+						}
+				}, files);
+			else {
+
+				byte[] hash = Hashing.sha256(options.getKey()),
+						// This should be salted.
+						header = Hashing.sha256(HASH_STRING + options.getKey() + HASH_STRING);
+				for (File f : files)
+					try {
+						process(f, options.isDecryptionMode(), options.getBufferSize(),
+								options.isSuppressSuccessMessages(), header, hash);
+					} catch (Exception e) {
+						System.err.println("Exception processing: " + f);
+						e.printStackTrace();
+					}
+			}
 		}
+	}
+
+	public static void genkeys(Options options) {
+		SecureRandom sr;
+		try {
+			sr = SecureRandom.getInstanceStrong();
+		} catch (NoSuchAlgorithmException e) {
+			System.err.println(
+					"This Java implementation is non-compliant and does not have a strong secure random number generator algorithm. Using a plain secure random number generator instead.");
+			sr = new SecureRandom();
+		}
+		char[] x = new char[options.getKeygenSize()];
+		for (int i = 0; i < x.length; i++)
+			x[i] = options.getKeyCharset().get(sr.nextInt(options.getKeyCharset().size()));
+		System.out.println(new String(x));
 	}
 
 	public static byte[] hashFile(File f, int bufferSize) throws IOException {
