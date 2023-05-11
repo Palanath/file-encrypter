@@ -89,9 +89,6 @@ public interface KeyCharset {
 		for (int i = 0; i < charsets.length; indices[i] = total += charsets[i++].size())
 			;
 		final int t = total;
-
-		System.out.println(Arrays.toString(indices));
-
 		return new KeyCharset() {
 
 			@Override
