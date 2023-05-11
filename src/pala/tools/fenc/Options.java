@@ -1,17 +1,56 @@
 package pala.tools.fenc;
 
+import java.security.SecureRandom;
+
 import pala.libs.generic.parsers.cli.CLIParams;
 
 public class Options {
 
 	public enum Mode {
-		ENCRYPT, DECRYPT, HASH, KEYGEN
+		/**
+		 * <p>
+		 * Specifies that encryption mode should be used. This is the case by default
+		 * when none of {@link #DECRYPT}, {@link #HASH}, and {@link #KEYGEN} is the
+		 * selected mode.
+		 * </p>
+		 * <p>
+		 * This mode expects a {@link Options#getKey() key} to be specified. This mode
+		 * responds to {@link Options#isSuppressSuccessMessages()} and
+		 * {@link Options#getBufferSize()}.
+		 * </p>
+		 * <p>
+		 * This mode encrypts all the specified files using the provided key. The
+		 * encrypted files are prepended with a 256-bit hash of the text "Encrypted by
+		 * FEnc." followed immediately by the provided key, followed again by "Encrypted
+		 * by FEnc.". Note that this hash string is <i>not</i> salted.
+		 * </p>
+		 * <p>
+		 * When encrypting a file, the program checks if the file about to be encrypted
+		 * contains the hash-header it expects. If the header is present, then that file
+		 * has already been encrypted with the provided key, so the program prints a
+		 * message and does not modify the file.
+		 * </p>
+		 */
+		ENCRYPT, DECRYPT, HASH,
+		/**
+		 * <p>
+		 * This mode is used solely to generate secure keys. It utilizes the specified
+		 * {@link Options#getKeygenSize() keygen size}, the and, if provided, the
+		 * provided {@link Options#getKey() key} as a source for the random generator.
+		 * </p>
+		 * <p>
+		 * This mode creates a new {@link SecureRandom} and generates the specified
+		 * number of random characters with it. The random character set can be
+		 * </p>
+		 */
+		KEYGEN
 	}
 
 	private final String key;
 	private final boolean suppressSuccessMessages;
 	private final int bufferSize;
 	private Mode mode;
+	private final int keygenSize;
 
 	private void setMode(Mode mode) {
 		if (mode == null)
@@ -31,6 +70,11 @@ public class Options {
 			mode = Mode.ENCRYPT;
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
+		keygenSize = params.readInt(10, "-ks", "--keygen-size", "--key-size");
+	}
+
+	public int getKeygenSize() {
+		return keygenSize;
 	}
 
 	/**
