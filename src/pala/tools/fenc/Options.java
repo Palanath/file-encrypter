@@ -60,8 +60,7 @@ public class Options {
 	private final KeyCharset keyCharset;
 
 	private void setMode(Mode mode) {
-		System.out.println(mode);
-		if (mode != null)
+		if (this.mode != null)
 			throw new RuntimeException("Two separate modes specified: " + this.mode + ", and " + mode);
 		this.mode = mode;
 	}
