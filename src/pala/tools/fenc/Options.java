@@ -78,7 +78,7 @@ public class Options {
 		{
 			String kc = params.readString((String) null, "--key-charset", "-kc");
 			if (kc == null)
-				keyCharset = null;
+				keyCharset = ALPHANUM_AND_SYMBOLS;
 			else
 				switch (kc) {
 				case "lowercase":
