@@ -60,7 +60,7 @@ public class Options {
 	private final KeyCharset keyCharset;
 
 	private void setMode(Mode mode) {
-		if (mode == null)
+		if (mode != null)
 			throw new RuntimeException("Two separate modes specified: " + this.mode + ", and " + mode);
 		this.mode = mode;
 	}
@@ -77,7 +77,7 @@ public class Options {
 			String kc = params.readString((String) null, "--key-charset", "-kc");
 			if (kc == null)
 				keyCharset = ALPHANUM_AND_SYMBOLS;
-			else
+			else {
 				switch (kc) {
 				case "lowercase":
 				case "lower":
@@ -112,7 +112,8 @@ public class Options {
 					throw new IllegalArgumentException(kc
 							+ " is not a valid key charset. Options are:\n\tlowercase, lower, uppercase, upper, number, digits, alphanumeric, alphanum, letters-and-numbers, symbol, extra-symbols, extended-symbols, alphanum-and-symbols, all");
 				}
-			setMode(Mode.KEYGEN);
+				setMode(Mode.KEYGEN);
+			}
 		}
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
