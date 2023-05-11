@@ -60,6 +60,7 @@ public class Options {
 	private final KeyCharset keyCharset;
 
 	private void setMode(Mode mode) {
+		System.out.println(mode);
 		if (mode != null)
 			throw new RuntimeException("Two separate modes specified: " + this.mode + ", and " + mode);
 		this.mode = mode;
@@ -108,9 +109,11 @@ public class Options {
 				case "alphanum-and-symbols":
 				case "all":
 					keyCharset = ALPHANUM_AND_SYMBOLS;
+					break;
 				default:
-					throw new IllegalArgumentException(kc
+					System.err.println(kc
 							+ " is not a valid key charset. Options are:\n\tlowercase, lower, uppercase, upper, number, digits, alphanumeric, alphanum, letters-and-numbers, symbol, extra-symbols, extended-symbols, alphanum-and-symbols, all");
+					System.exit(0);
 				}
 				setMode(Mode.KEYGEN);
 			}
@@ -119,8 +122,16 @@ public class Options {
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
 		keygenSize = params.readInt(10, "-ks", "--keygen-size", "--key-size");
 
-		if (mode == null)
+		// A mode should be specified here. The default mode is encrypt.
+		// Encryption requires a key.
+
+		if (mode == null) {
+			if (key == null) {
+				System.err.println("A key is required to encrypt.");
+				System.exit(0);
+			}
 			mode = Mode.ENCRYPT;
+		}
 	}
 
 	public KeyCharset getKeyCharset() {
