@@ -40,6 +40,11 @@ public class Options {
 		 * provided {@link Options#getKey() key} as a source for the random generator.
 		 * </p>
 		 * <p>
+		 * If <code>--key-charset</code> or <code>-kc</code> is specified, this mode is
+		 * enabled. If, afterwards, another argument enables another mode in conflict,
+		 * an error will be raised.
+		 * </p>
+		 * <p>
 		 * This mode creates a new {@link SecureRandom} and generates the specified
 		 * number of random characters with it. The random character set can be
 		 * </p>
@@ -109,6 +114,7 @@ public class Options {
 					throw new IllegalArgumentException(kc
 							+ " is not a valid key charset. Options are:\n\tlowercase, lower, uppercase, upper, number, digits, alphanumeric, alphanum, letters-and-numbers, symbol, extra-symbols, extended-symbols, alphanum-and-symbols, all");
 				}
+			setMode(Mode.KEYGEN);
 		}
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
