@@ -130,5 +130,10 @@ public interface KeyCharset {
 			UPPERCASE_LETTERS = transform(LOWERCASE_LETTERS, Character::toUpperCase),
 			DIGITS = from('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'),
 			LETTERS = combine(LOWERCASE_LETTERS, UPPERCASE_LETTERS),
-			LETTERS_AND_NUMBERS = combine(LOWERCASE_LETTERS, UPPERCASE_LETTERS, DIGITS);
+			LETTERS_AND_NUMBERS = combine(LOWERCASE_LETTERS, UPPERCASE_LETTERS, DIGITS),
+			SYMBOLS = from('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_'),
+			EXTRA_SYMBOLS = from('+', '=', '[', '{', '}', ']', '\\', '|', '<', '>', '?', '/', ',', '.', ':', ';', '\'',
+					'"', '~', '`'),
+			EXTENDED_SYMBOL_SET = combine(SYMBOLS, EXTRA_SYMBOLS),
+			ALPHANUM_AND_SYMBOLS = combine(LOWERCASE_LETTERS, UPPERCASE_LETTERS, DIGITS, SYMBOLS, EXTRA_SYMBOLS);
 }
