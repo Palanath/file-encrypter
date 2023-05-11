@@ -73,8 +73,6 @@ public class Options {
 			setMode(Mode.DECRYPT);
 		if (params.checkFlag(false, "-kg", "--keygen"))
 			setMode(Mode.KEYGEN);
-		if (mode == null)
-			mode = Mode.ENCRYPT;
 		{
 			String kc = params.readString((String) null, "--key-charset", "-kc");
 			if (kc == null)
@@ -119,6 +117,9 @@ public class Options {
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
 		keygenSize = params.readInt(10, "-ks", "--keygen-size", "--key-size");
+
+		if (mode == null)
+			mode = Mode.ENCRYPT;
 	}
 
 	public KeyCharset getKeyCharset() {
