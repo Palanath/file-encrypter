@@ -31,6 +31,25 @@ public class FileEncrypter {
 
 	private static final String HASH_STRING = "Encrypted by FEnc.";
 
+	private static class EncryptionFailureException extends RuntimeException {
+
+		public EncryptionFailureException() {
+		}
+
+		public EncryptionFailureException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public EncryptionFailureException(String message) {
+			super(message);
+		}
+
+		public EncryptionFailureException(Throwable cause) {
+			super(cause);
+		}
+
+	}
+
 	/**
 	 * <p>
 	 * Encrypts files and directories specified by arguments. Each file is processed
@@ -115,7 +134,12 @@ public class FileEncrypter {
 	public static void process(File f, boolean decryptionMode, int bufferSize, boolean suppressSuccessMessages,
 			byte[] header, byte... key) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
 		if (f.isFile()) {
-			processFile(f, decryptionMode, bufferSize, header, key);
+			try {
+				processFile(f, decryptionMode, bufferSize, header, key);
+			} catch (EncryptionFailureException e) {
+				System.err.println(e.getMessage());
+				return;
+			}
 			if (!suppressSuccessMessages)
 				System.out.println((decryptionMode ? "[DSUC](" + f.getAbsolutePath() + " Decrypted file " + f
 						: "[ESUC](" + f.getAbsolutePath() + " Eecrypted file " + f) + ')');
@@ -136,7 +160,7 @@ public class FileEncrypter {
 	}
 
 	private static void processFile(File f, boolean decryptionMode, int bufferSize, byte[] header, byte... key)
-			throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
+			throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, EncryptionFailureException {
 		// Expects f.isFile() to return true.
 
 		if (f.length() == 0)
@@ -185,10 +209,11 @@ public class FileEncrypter {
 	 * @throws IOException                        If an {@link IOException} occurs
 	 *                                            while reading/writing to the
 	 *                                            filesystem.
+	 * @throws EncryptionFailureException         if the file is already encrypted.
 	 */
 	private static void encryptFile(File f, File dest, int bufferSize, byte[] header, byte... key)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
-			InvalidAlgorithmParameterException, IOException {
+			InvalidAlgorithmParameterException, IOException, EncryptionFailureException {
 		try (FileInputStream fis = new FileInputStream(f)) {
 			byte[] headerbf = new byte[header.length];
 			int amt = 0;
@@ -205,7 +230,7 @@ public class FileEncrypter {
 				// header. Do a comparison.
 				if (Arrays.equals(headerbf, header)) {
 					// File already encrypted. Throw err:
-					throw new IllegalArgumentException("[AENC](" + f.getAbsolutePath() + ") Detected that file " + f
+					throw new EncryptionFailureException("[AENC](" + f.getAbsolutePath() + ") Detected that file " + f
 							+ " is already encrypted. Skipping...");
 					// Include "[AENC]" followed by the file before the message to make it easy for
 					// log scanners to grab the data. AENC is short for "already encrypted."
