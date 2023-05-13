@@ -54,7 +54,7 @@ public class Options {
 
 	private final String key;
 	private final boolean suppressSuccessMessages;
-	private final int bufferSize;
+	private final int bufferSize, notificationCycleTime;
 	private Mode mode;
 	private final int keygenSize;
 	private final KeyCharset keyCharset;
@@ -119,7 +119,9 @@ public class Options {
 			}
 		}
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
-		suppressSuccessMessages = params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
+
+		suppressSuccessMessages = (notificationCycleTime = params.readInt(-1, "--notification-time", "-nt")) < 1
+				|| params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
 		keygenSize = params.readInt(10, "-ks", "--keygen-size", "--key-size");
 
 		// A mode should be specified here. The default mode is encrypt.
@@ -132,6 +134,17 @@ public class Options {
 			}
 			mode = Mode.ENCRYPT;
 		}
+	}
+
+	/**
+	 * The amount of time, in milliseconds, between each notification of how many
+	 * files have been encrypted or decrypted since the last cycle.
+	 * 
+	 * @flag --notification-time -nt
+	 * @return The cycle time in milliseconds.
+	 */
+	public int getNotificationCycleTime() {
+		return notificationCycleTime;
 	}
 
 	public KeyCharset getKeyCharset() {
