@@ -72,10 +72,12 @@ public class PeriodicSuccessLogger {
 	private volatile BigInteger bytesHandled = BigInteger.ZERO;
 
 	private volatile Thread t;
+	
+	private final Object tmonitor = new Object();
 
 	private synchronized void createThread() {
 		if (t == null) {
-			t = new Thread(() -> {
+			(t = new Thread(() -> {
 				while (successes != 0) {
 					try {
 						Thread.sleep(millisDelay);
@@ -84,7 +86,7 @@ public class PeriodicSuccessLogger {
 					}
 					int successCount;
 					BigInteger bytesHandled;
-					synchronized (t) {
+					synchronized (tmonitor) {
 						successCount = successes;
 						successes = 0;
 						bytesHandled = PeriodicSuccessLogger.this.bytesHandled;
@@ -93,12 +95,12 @@ public class PeriodicSuccessLogger {
 					output.success("STAT",
 							"Encrypted " + successCount + " files and wrote " + bytesHandled + " bytes.");
 				}
-			});
+			})).start();
 		}
 	}
 
 	public void success(long encryptedBytesOutput) {
-		synchronized (t) {
+		synchronized (tmonitor) {
 			successes++;
 			bytesHandled = bytesHandled.add(BigInteger.valueOf(encryptedBytesOutput));
 		}
