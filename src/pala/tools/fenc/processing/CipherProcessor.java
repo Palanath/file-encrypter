@@ -101,8 +101,9 @@ public class CipherProcessor implements DirectoryProcessor {
 			temp.delete();
 
 		} catch (Exception e) {
-			logger.failure("UNKN", "An unknown failure occurred while processing " + f
-					+ ". The file may or may not have been " + operation + "ed, but should not be garbage.");
+			logger.failure("UNKN",
+					"An unknown failure occurred while processing " + f + ". The file may or may not have been "
+							+ operation + "ed, but should not be garbage. [Err msg: " + e.getLocalizedMessage() + ']');
 			return;
 		}
 		logger.success(f);
