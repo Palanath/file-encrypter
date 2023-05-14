@@ -107,4 +107,14 @@ public class CipherProcessor implements DirectoryProcessor {
 		}
 		logger.success(f);
 	}
+
+	public static CipherProcessor create(boolean encrypt, String key, int bufferSize, MessageLogger logger) {
+		return encrypt ? new EncryptionProcessor(key, bufferSize, logger)
+				: new DecryptionProcessor(key, bufferSize, logger);
+	}
+
+	public static CipherProcessor create(boolean encrypt, String key, int bufferSize, PeriodicSuccessLogger logger) {
+		return encrypt ? new EncryptionProcessor(key, bufferSize, logger)
+				: new DecryptionProcessor(key, bufferSize, logger);
+	}
 }
