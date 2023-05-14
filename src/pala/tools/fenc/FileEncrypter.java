@@ -38,7 +38,9 @@ public class FileEncrypter {
 							: MessageLogger.simpleLogger(), options.getBufferSize())
 					: options.isNotifyCycleEnabled()
 							? CipherProcessor.create(options.isEncryptionMode(), options.getKey(),
-									options.getBufferSize(), new PeriodicSuccessLogger(MessageLogger.simpleLogger()))
+									options.getBufferSize(),
+									new PeriodicSuccessLogger(MessageLogger.simpleLogger(),
+											options.getNotificationCycleTime()))
 							: CipherProcessor.create(options.isEncryptionMode(), options.getKey(),
 									options.getBufferSize(),
 									options.isSuppressSuccessMessages() ? MessageLogger.suppressSuccess()

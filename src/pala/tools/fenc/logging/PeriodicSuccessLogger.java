@@ -47,6 +47,11 @@ public class PeriodicSuccessLogger {
 
 	private MessageLogger output;
 
+	public PeriodicSuccessLogger(MessageLogger output, int millisDelay) {
+		this.output = output;
+		this.millisDelay = millisDelay;
+	}
+
 	public PeriodicSuccessLogger(MessageLogger output) {
 		this.output = output;
 	}
