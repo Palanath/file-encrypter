@@ -54,26 +54,6 @@ public class EncryptionProcessor implements DirectoryProcessor {
 		this.logger = logger;
 	}
 
-	public static class EncryptionFailureException extends FileProcessingException {
-		private static final long serialVersionUID = 1L;
-
-		private EncryptionFailureException() {
-		}
-
-		private EncryptionFailureException(String message, Throwable cause) {
-			super(message, cause);
-		}
-
-		private EncryptionFailureException(String message) {
-			super(message);
-		}
-
-		private EncryptionFailureException(Throwable cause) {
-			super(cause);
-		}
-
-	}
-
 	@Override
 	public void processFile(File f) {
 
@@ -174,7 +154,7 @@ public class EncryptionProcessor implements DirectoryProcessor {
 				// header. Do a comparison.
 				if (Arrays.equals(headerbf, header)) {
 					// File already encrypted. Throw err:
-					throw new EncryptionFailureException("Detected that file is already encrypted. Skipping...");
+					throw new FileProcessingException("Detected that file is already encrypted. Skipping...");
 					// Include "[AENC]" followed by the file before the message to make it easy for
 					// log scanners to grab the data. AENC is short for "already encrypted."
 
