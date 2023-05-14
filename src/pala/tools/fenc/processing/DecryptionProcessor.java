@@ -1,13 +1,9 @@
 package pala.tools.fenc.processing;
 
-import static pala.tools.fenc.processing.EncryptionProcessor.HASH_STRING;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -19,16 +15,11 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import pala.libs.generic.util.Hashing;
 import pala.tools.fenc.logging.BranchLogger;
 import pala.tools.fenc.logging.MessageLogger;
 import pala.tools.fenc.logging.PeriodicSuccessLogger;
 
-public class DecryptionProcessor implements DirectoryProcessor {
-
-	private final byte[] keyHash, fileHeader;
-	private final int bufferSize;
-	private final BranchLogger logger;
+public class DecryptionProcessor extends CipherProcessor {
 
 	public DecryptionProcessor(String key, int bufferSize, MessageLogger logger) {
 		this(key, bufferSize, new BranchLogger(logger));
@@ -39,64 +30,10 @@ public class DecryptionProcessor implements DirectoryProcessor {
 	}
 
 	private DecryptionProcessor(String key, int bufferSize, BranchLogger logger) {
-		keyHash = Hashing.sha256(key);
-		fileHeader = Hashing.sha256(HASH_STRING + key + HASH_STRING);
-		this.bufferSize = bufferSize;
-		this.logger = logger;
+		super("decrypt", DecryptionProcessor::decryptFile, key, bufferSize, logger);
 	}
 
-	@Override
-	public void processFile(File f) {
-		try {
-			if (f.length() == 0)
-				return;
-			File temp;
-			try {
-				// Create a temp file as the destination for the encryption/decryption.
-				temp = File.createTempFile("enc", null);
-			} catch (IOException e) {
-				logger.failure("TMPF",
-						"Failed to create the temporary file (for intermediary processing) that file, " + f
-								+ ", would get decrypted then written to. (The file was NOT decrypted.) [Err msg: "
-								+ e.getLocalizedMessage() + ']');
-				return;
-			}
-			temp.deleteOnExit();
-
-			try {
-				decryptFile(temp, f, bufferSize, fileHeader, keyHash);
-			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
-					| InvalidAlgorithmParameterException e) {
-				logger.failure("EFL", "Failed to initialize the decryption algorithm while processing file: " + f
-						+ ". [Err msg: " + e.getLocalizedMessage() + ']');
-				return;
-			} catch (IOException e) {
-				logger.failure("IOEX",
-						"Encountered a file in-out exception while trying to read or write and decrypt the file " + f
-								+ ". [Err msg: " + e.getLocalizedMessage() + ']');
-				return;
-			} catch (FileProcessingException e) {
-				logger.failure("ENEX", "Encountered an decryption failure while trying to encrypt the file " + f
-						+ ". [Err msg: " + e.getLocalizedMessage() + ']');
-				return;
-			}
-
-			try {
-				Files.copy(temp.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException e) {
-				logger.failure("TMPC", "An decrypted copy of " + f + " was written to a temporary file (" + temp
-						+ ") but an issue occurred when trying to copy that temporary file back over to the source file's location. [Err msg: "
-						+ e.getLocalizedMessage() + ']');
-			}
-			temp.delete();
-
-		} catch (Exception e) {
-			logger.failure("UNKN", "An unknown failure occurred while processing " + f
-					+ ". The file may or may not have been decrypted, but should not be garbage.");
-		}
-	}
-
-	private static void decryptFile(File f, File dest, int bufferSize, byte[] hdr, byte... key)
+	public static void decryptFile(File f, File dest, int bufferSize, byte[] hdr, byte... key)
 			throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
 			InvalidAlgorithmParameterException, FileProcessingException {
 		try (FileInputStream fis = new FileInputStream(f)) {
