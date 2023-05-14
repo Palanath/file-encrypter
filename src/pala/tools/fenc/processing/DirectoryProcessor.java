@@ -18,52 +18,6 @@ public abstract class DirectoryProcessor {
 		return options;
 	}
 
-	/**
-	 * <p>
-	 * Used by subclasses to print a message on success. The prefix is prepended to
-	 * the message in the format:
-	 * </p>
-	 * 
-	 * <pre>
-	 * <code>[prefix]: message</code>
-	 * </pre>
-	 * 
-	 * <p>
-	 * and the result is sent to standard out unless suppressed or configured
-	 * otherwise by the caller.
-	 * </p>
-	 * 
-	 * @param prefix  The prefix for the message, used by log-parsing utils to
-	 *                easily identify the message.
-	 * @param message The message itself.
-	 */
-	protected void success(String prefix, String message) {
-		System.out.println('[' + prefix + "]: " + message);
-	}
-
-	/**
-	 * <p>
-	 * Used by subclasses to print a message on failure. The prefix is prepended to
-	 * the message in the format:
-	 * </p>
-	 * 
-	 * <pre>
-	 * <code>[prefix]: message</code>
-	 * </pre>
-	 * 
-	 * <p>
-	 * and the result is sent to standard error, usually immediately even if
-	 * suppression is enabled.
-	 * </p>
-	 * 
-	 * @param prefix  The prefix for the message, used by log-parsing utils to
-	 *                easily identify the message.
-	 * @param message The message itself.
-	 */
-	protected void failure(String prefix, String message) {
-		System.err.println('[' + prefix + "]: " + message);
-	}
-
 	protected void handleAbnormalFileObject(File file) {
 		System.err.println("Failed to process the file: " + file + "; it is not a file or a directory.");
 	}
