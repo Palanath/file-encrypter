@@ -37,8 +37,8 @@ public abstract class DirectoryProcessor {
 	 *                easily identify the message.
 	 * @param message The message itself.
 	 */
-	protected final void success(String prefix, String message) {
-
+	protected void success(String prefix, String message) {
+		System.out.println('[' + prefix + "]: " + message);
 	}
 
 	/**
@@ -60,8 +60,8 @@ public abstract class DirectoryProcessor {
 	 *                easily identify the message.
 	 * @param message The message itself.
 	 */
-	protected final void failure(String prefix, String message) {
-
+	protected void failure(String prefix, String message) {
+		System.err.println('[' + prefix + "]: " + message);
 	}
 
 	protected void handleAbnormalFileObject(File file) {
