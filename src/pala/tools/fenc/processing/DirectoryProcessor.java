@@ -4,33 +4,10 @@ import java.io.File;
 import java.util.Iterator;
 
 import pala.libs.generic.JavaTools;
-import pala.tools.fenc.Options;
-import pala.tools.fenc.logging.StatusLogger;
 
 public abstract class DirectoryProcessor {
-
-	private final Options options;
-	private final StatusLogger logger;
-
-	public DirectoryProcessor(Options options) {
-		this(options, StatusLogger.simpleLogger());
-	}
-
-	public DirectoryProcessor(Options options, StatusLogger logger) {
-		this.options = options;
-		this.logger = logger;
-	}
-
-	protected final Options getOptions() {
-		return options;
-	}
-
-	protected final StatusLogger getLogger() {
-		return logger;
-	}
-
 	protected void handleAbnormalFileObject(File file) {
-		logger.failure("ABNF", "Failed to process the file: " + file + "; it is not a file or a directory.");
+		System.err.println("[ABNF]: Failed to process the file: " + file + "; it is not a file or a directory.");
 	}
 
 	/**
