@@ -120,7 +120,7 @@ public class Options {
 		}
 		bufferSize = params.readInt(65536, "--buffer-size", "-bs");
 
-		suppressSuccessMessages = (notificationCycleTime = params.readInt(-1, "--notification-time", "-nt")) < 1
+		suppressSuccessMessages = (notificationCycleTime = params.readInt(-1, "--notification-time", "-nt")) > 0
 				|| params.checkFlag(false, "--quiet", "-q", "--suppress-success-messages", "-s");
 		keygenSize = params.readInt(10, "-ks", "--keygen-size", "--key-size");
 
