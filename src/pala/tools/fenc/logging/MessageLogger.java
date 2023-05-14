@@ -1,10 +1,20 @@
 package pala.tools.fenc.logging;
 
+/**
+ * An API interface that takes string inputs and prints them, formatted, to a
+ * certain output. An instance of this type is used as an intermediary between
+ * an actual output (like the command line) and another type of logger that
+ * formats different data (such as "success objects") into string messages, such
+ * as {@link PeriodicSuccessLogger}.
+ * 
+ * @author Palanath
+ *
+ */
 public interface MessageLogger {
 	/**
 	 * <p>
-	 * Used by subclasses to print a message on success. The prefix is prepended to
-	 * the message in the format:
+	 * Used to print a message on success. The prefix is prepended to the message in
+	 * the format:
 	 * </p>
 	 * 
 	 * <pre>
@@ -24,8 +34,8 @@ public interface MessageLogger {
 
 	/**
 	 * <p>
-	 * Used by subclasses to print a message on failure. The prefix is prepended to
-	 * the message in the format:
+	 * Used to print a message on failure. The prefix is prepended to the message in
+	 * the format:
 	 * </p>
 	 * 
 	 * <pre>
