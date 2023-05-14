@@ -15,11 +15,8 @@ public interface DirectoryProcessor {
 	 * not a directory.
 	 * 
 	 * @param file The file to process.
-	 * @throws FileProcessingException If an error occurred with this file, but
-	 *                                 processing of subsequent files can continue
-	 *                                 normally.
 	 */
-	void processFile(File file) throws FileProcessingException;
+	void processFile(File file);
 
 	default void process(File file) {
 		if (file.isDirectory())
