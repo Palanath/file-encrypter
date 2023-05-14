@@ -147,6 +147,10 @@ public class Options {
 		return notificationCycleTime;
 	}
 
+	public boolean isNotifyCycleEnabled() {
+		return getNotificationCycleTime() > 0;
+	}
+
 	public KeyCharset getKeyCharset() {
 		return keyCharset;
 	}
