@@ -54,7 +54,7 @@ public class CipherProcessor implements DirectoryProcessor {
 	private final Operator operator;
 
 	@Override
-	public void processFile(File f) {
+	public final void processFile(File f) {
 		try {
 			if (f.length() == 0)
 				return;
