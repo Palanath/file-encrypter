@@ -98,7 +98,7 @@ public class PeriodicSuccessLogger {
 						PeriodicSuccessLogger.this.bytesHandled = BigInteger.ZERO;
 					}
 					output.success("STAT",
-							"Encrypted " + successCount + " files and wrote " + bytesHandled + " bytes.");
+							"Processed " + successCount + " files and wrote " + bytesHandled + " bytes.");
 				}
 				t = null;
 			})).start();
