@@ -5,8 +5,8 @@ import java.util.Iterator;
 
 import pala.libs.generic.JavaTools;
 
-public abstract class DirectoryProcessor {
-	protected void handleAbnormalFileObject(File file) {
+public interface DirectoryProcessor {
+	default void handleAbnormalFileObject(File file) {
 		System.err.println("[ABNF]: Failed to process the file: " + file + "; it is not a file or a directory.");
 	}
 
@@ -19,9 +19,9 @@ public abstract class DirectoryProcessor {
 	 *                                 processing of subsequent files can continue
 	 *                                 normally.
 	 */
-	protected abstract void processFile(File file) throws FileProcessingException;
+	void processFile(File file) throws FileProcessingException;
 
-	public final void process(File file) {
+	default void process(File file) {
 		if (file.isDirectory())
 			process(file.listFiles());
 		else if (file.isFile())
@@ -30,17 +30,17 @@ public abstract class DirectoryProcessor {
 			handleAbnormalFileObject(file);
 	}
 
-	public final void process(Iterator<? extends File> files) {
+	default void process(Iterator<? extends File> files) {
 		if (files.hasNext())
 			for (; files.hasNext(); process(files.next()))
 				;
 	}
 
-	public final void process(Iterable<? extends File> files) {
+	default void process(Iterable<? extends File> files) {
 		process(files.iterator());
 	}
 
-	public final void process(File... files) {
+	default void process(File... files) {
 		process(JavaTools.iterator(files));
 	}
 }
