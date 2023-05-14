@@ -72,7 +72,7 @@ public class CipherProcessor implements DirectoryProcessor {
 			temp.deleteOnExit();
 
 			try {
-				operator.operate(temp, f, bufferSize, fileHeader, keyHash);
+				operator.operate(f, temp, bufferSize, fileHeader, keyHash);
 			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
 					| InvalidAlgorithmParameterException e) {
 				logger.failure("EFL", "Failed to initialize the " + operation + "ion algorithm while processing file: "
