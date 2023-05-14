@@ -1,6 +1,6 @@
 package pala.tools.fenc.logging;
 
-public interface StatusLogger {
+public interface MessageLogger {
 	/**
 	 * <p>
 	 * Used by subclasses to print a message on success. The prefix is prepended to
@@ -43,7 +43,7 @@ public interface StatusLogger {
 	 */
 	void failure(String prefix, String message);
 
-	class SimpleLogger implements StatusLogger {
+	class SimpleMessageLogger implements MessageLogger {
 		@Override
 		public void success(String prefix, String message) {
 			System.out.println('[' + prefix + "]: " + message);
@@ -55,7 +55,7 @@ public interface StatusLogger {
 		}
 	}
 
-	static SimpleLogger simpleLogger() {
-		return new SimpleLogger();
+	static SimpleMessageLogger simpleLogger() {
+		return new SimpleMessageLogger();
 	}
 }
