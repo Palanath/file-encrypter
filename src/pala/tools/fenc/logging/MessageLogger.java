@@ -65,7 +65,17 @@ public interface MessageLogger {
 		}
 	}
 
+	class FailuresOnlyMessageLogger extends SimpleMessageLogger {
+		@Override
+		public void success(String prefix, String message) {
+		}
+	}
+
 	static SimpleMessageLogger simpleLogger() {
 		return new SimpleMessageLogger();
+	}
+
+	static FailuresOnlyMessageLogger suppressSuccess() {
+		return new FailuresOnlyMessageLogger();
 	}
 }
